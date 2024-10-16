@@ -1,0 +1,140 @@
+---
+title: "NYPDShootingIncidents"
+author: "Efren Hernandez"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+  knitr::opts_chunk$set(echo = TRUE)
+```
+
+# **Week 3 Project: NYPD Shooting Incidents**
+
+*Start an Rmd document that describes and imports the shooting project dataset in a reproducible manner.*
+
+### Loading tidyverse library
+
+```{r, echo=FALSE}
+  library(tidyverse)
+```
+
+
+### Importing the dataset and copying into an array
+
+*This dataset is a list of every shooting incident that occurred in NYC going back to 2006 through the end of the previous calendar year.*
+
+*This is a breakdown of every shooting incident that occurred in NYC going back to 2006 through the end of the previous calendar year. This data is manually extracted every quarter and reviewed by the Office of Management Analysis and Planning before being posted on the NYPD website. Each record represents a shooting incident in NYC and includes information about the event, the location and time of occurrence. In addition, information related to suspect and victim demographics is also included. This data can be used by the public to explore the nature of shooting/criminal activity.* 
+
+```{r, echo=FALSE}
+  ShootingsNYPD_lookup_url <-    "https://data.cityofnewyork.us/api/views/833y-fsy8/rows.csv?accessType=DOWNLOAD"
+ShootingsNYPD_Array <- read_csv(ShootingsNYPD_lookup_url, show_col_types = FALSE)
+```
+
+### Cleaning up data: Selecting and displaying only wanted data; Removing NA and Replacing (null) values.
+
+```{r, echo=FALSE}
+ShootingsNYPD_ArrayRefined <- ShootingsNYPD_Array %>%
+      select(INCIDENT_KEY,
+	       OCCUR_DATE,
+	       OCCUR_TIME,
+	       BORO,
+	       LOC_OF_OCCUR_DESC,
+	       LOC_CLASSFCTN_DESC,
+	       LOCATION_DESC,
+	       PRECINCT,
+	       Lon_Lat)
+
+na.omit(ShootingsNYPD_ArrayRefined) %>%
+mutate(LOCATION_DESC = ifelse(as.character(LOCATION_DESC) == "(null)", "STREET", as.character(LOCATION_DESC)),
+		   LOC_CLASSFCTN_DESC = ifelse(as.character(LOC_CLASSFCTN_DESC) == "(null)", "OTHER", as.character(LOCATION_DESC)))
+```
+### Total Shootings per NYC Borough
+### Extract data
+```{r, echo=FALSE}
+ShootingsNYPD_by_BORO <- ShootingsNYPD_ArrayRefined %>%
+	count(BORO, sort = TRUE)
+```
+
+### Display Data
+```{r, echo=FALSE}
+ShootingsNYPD_by_BORO
+```
+
+### Plot Data - Two types of bar graph
+```{r, echo=FALSE}
+ggplot(data = ShootingsNYPD_by_BORO, aes(x = BORO, y = n)) +
+  geom_bar(stat = "identity", fill = "steelblue")+
+  geom_text(aes(label = n), vjust = -0.3, size = 3.5)+
+  theme_minimal()
+
+p <- ggplot(ShootingsNYPD_by_BORO, aes(x=BORO, y=n, color=BORO)) +
+  geom_bar(stat="identity", fill="white")
+p+scale_color_brewer(palette="Dark2")
+
+```	
+
+### Total Shootings per NYC Location Type
+### Extract data
+```{r, echo=FALSE}
+ShootingsNYPD_by_LOCDESC <- ShootingsNYPD_ArrayRefined %>%
+    count(LOCATION_DESC, sort = TRUE)
+```
+
+### Display Data
+```{r, echo=FALSE}
+ShootingsNYPD_by_LOCDESC
+```
+
+### Plot Data
+```{r, echo=FALSE}
+ShootingsNYPD_by_LOCDESC %>%
+    ggplot(aes(x = LOCATION_DESC, y = n )) +
+	geom_point(aes(color = "Shootings")) +	
+    geom_point(aes(y = n, color = "Shootings")) +
+	theme(legend.position = "bottom",
+		axis.text.x = element_text(angle = 90)) +
+		labs(title = "Locations of Shootings in NYC", y = NULL)
+```
+
+
+### Total Shootings per NYC Location Classification
+### Extract data
+```{r, echo=FALSE}
+ShootingsNYPD_by_LCLA <- ShootingsNYPD_ArrayRefined %>%
+    count(LOC_CLASSFCTN_DESC, sort = TRUE)
+```
+
+### Display Data
+```{r, echo=FALSE}
+ShootingsNYPD_by_LCLA
+```
+
+### Plot Data
+
+### Total Shootings per NYC Indoor/Outdoor
+### Extract data
+```{r, echo=FALSE}
+ShootingsNYPD_by_INOUT <- ShootingsNYPD_ArrayRefined %>%
+    count(LOC_OF_OCCUR_DESC, sort = TRUE)
+```
+
+### Display Data
+```{r, echo=FALSE}
+ShootingsNYPD_by_INOUT
+```
+
+### Plot Data
+```{r, echo=FALSE}
+pie <- ggplot(ShootingsNYPD_by_INOUT, aes(x="", y=n, fill=LOC_OF_OCCUR_DESC))+
+	geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0)+ 
+	scale_fill_brewer("Blues")
+pie
+```
+### **Your session info (as output from R):** 
+```{r, echo=FALSE}
+sessionInfo()
+```
+
